@@ -2,7 +2,7 @@ from data_sources.csv_source import CsvSourceType1
 from data_persistence.mongodb import MongoDB
 
 
-path_csv = r'C:\Users\abel\Jupyter\bmat\data/db_works_test.csv'
+path_csv = r'data_files_raw/db_works_test.csv'
 csv_data = CsvSourceType1(path_csv)
 # csv_data.check_consistency()
 list_works_dict = csv_data.transform_to_list_dict()
