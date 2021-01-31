@@ -20,18 +20,35 @@ class CsvSourceType1:
 
     def check_consistency(self):
         """
-
+        Basic test consistency for reporting. It could be saved to a text or log file but, for the moment, message
+        is only printed in the console.
         """
-        # TODO
         df = self.df
-        check_iswc = df['ISWC'].unique()
-        check_ot = df['ORIGINAL TITLE'].unique()
-        check_iswc = df['ISWC'].unique()
+        n_rows = df.shape[0]
+        n_musical_works = df['ID SOCIETY'].nunique()
+        dup_musical_works = df[df.duplicated(subset=['ID SOCIETY', 'IPI NUMBER'])]['ID SOCIETY'].unique()
+        empty_id = df[(df['ID SOCIETY'].isna()) | (df['ID SOCIETY'] == '')].index.to_list()
+        empty_iswc = df[(df['ISWC'].isna()) | (df['ISWC'] == '')]['ID SOCIETY'].to_list()
+        empty_ipi = df[(df['IPI NUMBER'].isna()) | (df['IPI NUMBER'] == '')]['ID SOCIETY'].to_list()
+        df_unique = df.drop_duplicates(subset=['ID SOCIETY', 'ORIGINAL TITLE'])
+        mask_many_titles = df.drop_duplicates(subset=['ID SOCIETY', 'ORIGINAL TITLE'])['ID SOCIETY'].duplicated()
+        different_org_titles = df_unique[mask_many_titles]['ID SOCIETY'].to_list()
+
+        msg = "Consistency report: \n " \
+              f"Number of rows: {n_rows}\n " \
+              f"Number of different musical works (ID SOCIETies): {n_musical_works}\n " \
+              f"Duplicated musical works (ID SOCIETies) / Authors: {dup_musical_works}\n " \
+              f"Empty IDs (ID SOCIETies). Row number: {empty_id}\n " \
+              f"Empty IDs (ISWC). ID SOCIETY: {empty_iswc}\n " \
+              f"Empty IDs (IPI). ID SOCIETY: {empty_ipi}\n " \
+              f"Many Original Titles for the same musical work. ID SOCIETY: {different_org_titles}\n "
+
+        print(msg)
 
     def transform_to_list_dict(self):
         """
-
-        :return:
+        Transform csv file to a list of dictionaries, according the specification.
+        :return: list_works (list of dictionaries)
         """
         df_raw = self.df
         df_raw = df_raw.fillna('')
@@ -83,9 +100,9 @@ class CsvSourceType1:
 
     def save_to_file_as_dict(self, path_output_file):
         """
-
-        :rtype: object
-        :param path_output_file: 
+        Transform csv data to list of dictionaries and then, save it to a plain text file. It could be useful for
+        creating a Data Lake.
+        :param path_output_file: file path for saving the data transformed to lsit of dictionaries.
         """
         list_works_dict = self.transform_to_list_dict()
         with open(path_output_file, 'w') as f:
@@ -94,4 +111,5 @@ class CsvSourceType1:
 
 
 class CsvSourceType2:
+    # Just in case new csv files with different format
     pass
