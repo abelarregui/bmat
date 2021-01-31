@@ -2,7 +2,7 @@
 
 ## BMAT library’s Structure
 
-The library is divided into two different modules to make simple and clean adding new code and functionalities in the 
+The library is divided into three different modules to make simple and clean adding new code and functionalities in the 
 future. 
 
 -	data_persistence: module for CRUD-ing functions, thinking in new possible DBs.
@@ -19,6 +19,10 @@ future.
             - check_consistency()
     - aux_functions.py (auxiliary functions for all data sources)
         - clean_string_iswc(iswc)
+    
+- tests (only a few examples):
+    - unit
+    - integrity
 
 Also, three main files have been created:
 1.	main_etl: Extract, transform and load db_works_test.csv info into mongodb database 
