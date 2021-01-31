@@ -28,7 +28,7 @@ print("OK")
 
 data = {"db": "bmat",
         "collection": "musicalworks",
-        "list_works_dict": list_works_dict
+        "list_dict": list_works_dict
         }
 # print(list_works_dict)
 print("connecting with mongo")
