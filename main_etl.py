@@ -28,14 +28,17 @@ print("OK")
 
 data = {"db": "bmat",
         "collection": "musicalworks",
-        "list_dict": list_works_dict
+        "list_works_dict": list_works_dict
         }
-print("* Ingesting data... ", end='', flush=True)
+# print(list_works_dict)
+print("connecting with mongo")
+mongo = MongoDB()
+# for db in mongo.client.list_databases():
+#     print(db)
+
 result_insert = mongo.insert_many(data)
 if result_insert:
-    inserted_list = result_insert.inserted_ids
-    print("OK")
-    print(f"{len(inserted_list)} musical works have been added: ", inserted_list)
+    print(result_insert.inserted_ids)
 else:
     print("No data added")
 
