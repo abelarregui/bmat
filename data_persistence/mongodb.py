@@ -36,6 +36,23 @@ class MongoDB:
             print('Error: ', e)
             return result
 
+    def insert(self, data):
+        """
+        Insert many documents to a given collection in a given database.
+        :param data: dictionary with db, collection and list_dicts keys to insert.
+        :return: result of the insert_many
+        """
+        db = self.client[data['db']]
+        collection = db[data['collection']]
+        doc = data['document']
+        result = None
+        try:
+            result = collection.insert_one(doc)
+            return result
+        except BulkWriteError as e:
+            print('Error: ', e)
+            return result
+
     def get_by_iswc(self, data):
         """
         Get right owners stored in a collection of a given database by iswc

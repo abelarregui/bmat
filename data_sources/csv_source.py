@@ -1,9 +1,10 @@
+import csv
 import pandas as pd
 import numpy as np
 from .aux_functions import clean_string_iswc
 
 
-class CsvSourceType1:
+class CsvSourceType:
 
     def __init__(self, path_file):
         """
@@ -16,46 +17,44 @@ class CsvSourceType1:
         :param path_file: absolute path of the file to read.
         """
         self.path_file = path_file
-        self.df = pd.read_csv(path_file, converters={'IPI NUMBER': str})
+        unique_ids = set()
+        # Create generator to read csv
+        data_gen_tmp = self.__create_generator()
+        # Read csv for extracting unique ids (needed for finding all rows for the same musical work)
+        for row in data_gen_tmp:
+            # print(row[8])
+            unique_ids.add(row[8])
+        # All unique ids are stored in memory. For avoiding this, a new txt file could be created
+        self.unique_id_society = unique_ids
 
-    def check_consistency(self):
-        """
-        Basic test consistency for reporting. It could be saved to a text or log file but, for the moment, message
-        is only printed in the console.
-        """
-        df = self.df
-        n_rows = df.shape[0]
-        n_musical_works = df['ID SOCIETY'].nunique()
-        dup_musical_works = df[df.duplicated(subset=['ID SOCIETY', 'IPI NUMBER'])]['ID SOCIETY'].unique()
-        empty_id = df[(df['ID SOCIETY'].isna()) | (df['ID SOCIETY'] == '')].index.to_list()
-        empty_iswc = df[(df['ISWC'].isna()) | (df['ISWC'] == '')]['ID SOCIETY'].to_list()
-        empty_ipi = df[(df['IPI NUMBER'].isna()) | (df['IPI NUMBER'] == '')]['ID SOCIETY'].to_list()
-        df_unique = df.drop_duplicates(subset=['ID SOCIETY', 'ORIGINAL TITLE'])
-        mask_many_titles = df.drop_duplicates(subset=['ID SOCIETY', 'ORIGINAL TITLE'])['ID SOCIETY'].duplicated()
-        different_org_titles = df_unique[mask_many_titles]['ID SOCIETY'].to_list()
+    def __create_generator(self):
+        with open(self.path_file, "r", encoding='latin1') as csv_file:
+            data_reader = csv.reader(csv_file)
+            self.columns = next(data_reader)
+            for row in data_reader:
+                yield row  # yield the header row
 
-        msg = "Consistency report: \n " \
-              f"Number of rows: {n_rows}\n " \
-              f"Number of different musical works (ID SOCIETies): {n_musical_works}\n " \
-              f"Duplicated musical works (ID SOCIETies) / Authors: {dup_musical_works}\n " \
-              f"Empty IDs (ID SOCIETies). Row number: {empty_id}\n " \
-              f"Empty IDs (ISWC). ID SOCIETY: {empty_iswc}\n " \
-              f"Empty IDs (IPI). ID SOCIETY: {empty_ipi}\n " \
-              f"Many Original Titles for the same musical work. ID SOCIETY: {different_org_titles}\n "
 
-        print(msg)
+    def generator(self, id_society=None):
+        with open(self.path_file, "r", encoding='latin1') as csv_file:
+            data_reader = csv.reader(csv_file)
+            for row in data_reader:
+                if row[8] == id_society:
+                    yield row  # yield the header row
 
-    def transform_to_list_dict(self):
+    def parsed_data(self):
         """
         Transform csv file to a list of dictionaries, according the specification.
         :return: list_works (list of dictionaries)
         """
-        df_raw = self.df
-        df_raw = df_raw.fillna('')
-        list_works = []
-        # As the specification document says, ID SOCIETY will be PK, for this reason, this column is used to make a loop
-        # grouping for musical work
-        for id_work, df in df_raw.groupby('ID SOCIETY'):
+        for id_society in self.unique_id_society:
+            print(id_society)
+            data_gen = self.generator(id_society)
+            df = pd.DataFrame()
+            for row in data_gen:
+                # print(row)
+                df = df.append([row], ignore_index=True)
+            df.columns = self.columns
             d = {}
             df = df.reset_index(drop=True)
 
@@ -70,7 +69,8 @@ class CsvSourceType1:
             for title in df['ORIGINAL TITLE'].unique():
                 d['titles'].append({'title': title, "type": 'OriginalTitle'})
 
-            # AlternativeTitles: All unique values are calculated. Then, new dictionaries are added to the list
+            # AlternativeTitles: All unique values are calculated.
+            # Then, new dictionaries are added to the list
             alt_titles = pd.unique(df.filter(regex='ALTERNATIVE TITLE').values.ravel())
             alt_titles = alt_titles[~pd.isnull(alt_titles)]
             for alt_title in np.unique(alt_titles):
@@ -94,22 +94,4 @@ class CsvSourceType1:
 
             # Titles are not included in the right_owners loop deliberately in order to avoid errors in the consistency
             # of the data_sources. Drop duplicated titles and obtain cleaner data_sources has been the main reason.
-            list_works.append(d)
-
-        return list_works
-
-    def save_to_file_as_dict(self, path_output_file):
-        """
-        Transform csv data to list of dictionaries and then, save it to a plain text file. It could be useful for
-        creating a Data Lake.
-        :param path_output_file: file path for saving the data transformed to lsit of dictionaries.
-        """
-        list_works_dict = self.transform_to_list_dict()
-        with open(path_output_file, 'w') as f:
-            f.write(str(list_works_dict))
-        return list_works_dict
-
-
-class CsvSourceType2:
-    # Just in case new csv files with different format
-    pass
+            yield d
