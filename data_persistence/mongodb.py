@@ -38,9 +38,9 @@ class MongoDB:
 
     def insert(self, data):
         """
-        Insert many documents to a given collection in a given database.
-        :param data: dictionary with db, collection and list_dicts keys to insert.
-        :return: result of the insert_many
+        Insert a document to a given collection in a given database.
+        :param data: dictionary with db, collection and doc keys to insert.
+        :return: result of the insert_one
         """
         db = self.client[data['db']]
         collection = db[data['collection']]
