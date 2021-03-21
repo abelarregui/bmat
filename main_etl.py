@@ -1,6 +1,12 @@
-import pprint
-from data_sources.csv_source import CsvSourceType
+import os
+
+from dotenv import load_dotenv
+
 from data_persistence.mongodb import MongoDB
+from data_sources.csv_source import CsvSourceType
+
+load_dotenv()
+MONGOSERVER = os.getenv("MONGOSERVER")
 
 
 def main():
@@ -20,7 +26,9 @@ def main():
 
     # Ingest MongoDB with the data
     print("* Connecting with the data base (MongoDB)... ", end='', flush=True)
-    mongo = MongoDB()
+
+    uri = f'mongodb://{MONGOSERVER}/'
+    mongo = MongoDB(uri)
     print("OK")
 
     for doc in parsed_data:
